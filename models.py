@@ -7,13 +7,13 @@ class StatusEnum(str, Enum):
     ACTIVE = "favorite"
     INACTIVE = ""
 
-class CustomerPlan(SQLModel, table=True):
+class UserBooks(SQLModel, table=True):
     id: int = Field(primary_key=True)
-    plan_id: int = Field(foreign_key="plan.id")
-    customer_id: int = Field(foreign_key="customer.id")
+    book_id: int = Field(foreign_key="book.id")
+    user_id: int = Field(foreign_key="user.id")
     status: StatusEnum = Field(default=StatusEnum.ACTIVE)
 
-class  BookBase(SQLModel):
+class BookBase(SQLModel):
     title: str = Field(default=None)
     author: str = Field(default=None)
     year: str = Field(default=None)
@@ -21,12 +21,17 @@ class  BookBase(SQLModel):
     num_pages: int = Field(default=None)
     image: str = Field(default=None)
 
-class
+class BookCreate(BookBase):
+    pass
+
+class BookUpdate(BookBase):
+    pass
+
 
 class Book(BookBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     users: list["User"] = Relationship(
-        back_populates="plans", link_model=CustomerPlan
+        back_populates="books", link_model=UserBooks
     )
 
 class UserBase(SQLModel):
@@ -39,14 +44,20 @@ class UserBase(SQLModel):
     @classmethod
     def validate_email(cls, value):
         session = Session(engine)
-        query = select(Customer).where(Customer.email == value)
+        query = select(User).where(User.email == value)
         result = session.exec(query).first()
         if result:
             raise ValueError("This email is alredy registered")
         return value
 
+class UserCreate(BookBase):
+    pass
+
+class UserUpdate(BookBase):
+    pass
+
 class User(UserBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     books: list[Book] = Relationship(
-        back_populates="customers", link_model=CustomerPlan
+        back_populates="users", link_model=UserBooks
     )
