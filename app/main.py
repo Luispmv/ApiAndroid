@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from db import create_all_tables
-from
+from .routers import user, book
 
 app = FastAPI(lifespan=create_all_tables)
-app.include_router(user.)
+app.include_router(user.router)
+app.include_router(book.router)
 
 @app.get("/")
 async def root():

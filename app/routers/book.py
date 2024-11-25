@@ -24,11 +24,7 @@ async def list_book(session: SessionDep):
     return session.exec(select(Book)).all()
 
 
-@router.get(
-    "/books/{book_id}",
-    response_model=Book,
-    tags=["books"]
-)
+@router.get("/books/{book_id}",response_model=Book,tags=["books"])
 async def read_book(book_id: int, session: SessionDep):
     book_db = session.get(Book, book_id)
     if not book_db:
@@ -39,11 +35,7 @@ async def read_book(book_id: int, session: SessionDep):
     return book_db
 
 
-@router.get(
-    "/books/{book_category}",
-    response_model=Book,
-    tags=["books"]
-)
+@router.get("/books/{book_category}",response_model=Book,tags=["books"])
 async def read_book_by_category(book_category: str, session: SessionDep):
     book_db = session.get(Book, book_category)
     if not book_db:
@@ -54,10 +46,7 @@ async def read_book_by_category(book_category: str, session: SessionDep):
     return book_db
 
 
-@router.delete(
-    "/books/{book_id}",
-    tags=["books"]
-)
+@router.delete("/books/{book_id}",tags=["books"])
 async def delete_user(book_id: int, session: SessionDep):
     book_db = session.get(Book, book_id)
     if not book_db:
