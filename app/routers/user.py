@@ -13,33 +13,56 @@ async def create_user(user_data: UserCreate, session: SessionDep):
     session.refresh(user)
     return user
 
-@router.get("/users", response_model=list[User], tags=["users"])
+@router.get(
+    "/users",
+    response_model=list[User],
+    tags=["users"]
+)
 async def list_user(session: SessionDep):
     return session.exec(select(User)).all()
 
-@router.get("/users/{user_id}", response_model=User, tags=["users"])
+@router.get(
+    "/users/{user_id}",
+    response_model=User,
+    tags=["users"]
+)
 async def read_user(user_id: int, session: SessionDep):
     user_db = session.get(User, user_id)
     if not user_db:
-        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,detail="User id doesn't exist")
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail="User doesn't exist"
+        )
     return user_db
 
-@router.delete("/user/{user_id}", tags=["users"])
+@router.delete(
+    "/users/{user_id}",
+    tags=["users"]
+)
 async def delete_user(user_id: int, session: SessionDep):
     user_db = session.get(User, user_id)
     if not user_db:
-        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,detail="User id doesn't exist")
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail="User doesn't exist"
+        )
     session.delete(user_db)
     session.commit()
     return {"detail": "Deleted user"}
 
-@router.patch("/user/{user_id}", response_model=User, status_code=status.HTTP_201_CREATED, tags=["users"])
-async def update_user(user_id: int, user_data: UserUpdate,  session: SessionDep):
+@router.patch("/users/{user_id}", response_model=User, status_code=status.HTTP_201_CREATED, tags=["users"])
+async def update_user(
+        user_id: int,
+        user_data: UserUpdate,
+        session: SessionDep
+):
     user_db = session.get(User, user_id)
     if not user_db:
-        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,detail="Customer id doesn't exist")
-    custumer_data_dict = user_data.model_dump(exclude_unset=True)
-    user_db.sqlmodel_update(custumer_data_dict)
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,detail="Customer doesn't exist"
+        )
+    user_data_dict = user_data.model_dump(exclude_unset=True)
+    user_db.sqlmodel_update(user_data_dict)
     session.add(user_db)
     session.commit()
     session.refresh(user_db)
@@ -53,7 +76,7 @@ async def subcribe_book_to_user(user_id: int, book_id: int,  session: SessionDep
     if not user_db or not book_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="The customer or plan doesn't exist"
+            detail="The user or book doesn't exist"
         )
     user_book_db = UserBooks(
         book_id = book_db.id,
@@ -72,9 +95,12 @@ async def read_book_to_user(
         session: SessionDep,
         book_status: StatusEnum = Query()
 ):
-    customer_db = session.get(User, user_id)
-    if not customer_db:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    user_db = session.get(User, user_id)
+    if not user_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User doesn't exist"
+        )
 
     query = (
         select(UserBooks)
