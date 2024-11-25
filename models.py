@@ -1,11 +1,11 @@
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import EmailStr, field_validator
 from sqlmodel import SQLModel, Field, Relationship, Session, select
 from enum import Enum
 from db import engine
 
 class StatusEnum(str, Enum):
     ACTIVE = "favorite"
-    INACTIVE = ""
+    INACTIVE = "no favorite"
 
 class UserBooks(SQLModel, table=True):
     id: int = Field(primary_key=True)
@@ -50,10 +50,10 @@ class UserBase(SQLModel):
             raise ValueError("This email is alredy registered")
         return value
 
-class UserCreate(BookBase):
+class UserCreate(UserBase):
     pass
 
-class UserUpdate(BookBase):
+class UserUpdate(UserBase):
     pass
 
 class User(UserBase, table=True):
