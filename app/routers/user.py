@@ -143,7 +143,7 @@ async def login(email: str, password: str, session: SessionDep):
     if not pwd_context.verify(password, user_db.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
+            detail="Usuario o contraseña incorrectos"
         )
     # Devolver los atributos del usuario con su ID
     return user_db
