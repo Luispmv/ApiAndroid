@@ -2,6 +2,7 @@ from models import User, UserCreate, UserUpdate, UserBooks, Book, StatusEnum
 from fastapi import APIRouter, HTTPException, status, Query
 from db import SessionDep
 from sqlmodel import select
+from passlib.context import CryptContext
 
 router = APIRouter()
 
@@ -46,11 +47,16 @@ async def read_book_to_user(
 # 4. Crear un nuevo usuario
 @router.post("/users", response_model=User, tags=["users"])
 async def create_user(user_data: UserCreate, session: SessionDep):
+    # Hash de la contraseña
+    hashed_password = pwd_context.hash(user_data.password)
+    user_data.password = hashed_password
+    # Crear usuario
     user = User.model_validate(user_data.model_dump())
     session.add(user)
     session.commit()
     session.refresh(user)
     return user
+
 
 # 5. Asociar un libro a un usuario
 @router.post("/users/{user_id}/books/{book_id}", tags=["users"])
@@ -91,11 +97,18 @@ async def update_user(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User doesn't exist"
         )
+
     user_data_dict = user_data.model_dump(exclude_unset=True)
+
+    if "password" in user_data_dict:
+        user_data_dict["password"] = pwd_context.hash(user_data_dict["password"])
+
     user_db.sqlmodel_update(user_data_dict)
+
     session.add(user_db)
     session.commit()
     session.refresh(user_db)
+
     return user_db
 
 # 7. Eliminar un usuario
@@ -110,3 +123,27 @@ async def delete_user(user_id: int, session: SessionDep):
     session.delete(user_db)
     session.commit()
     return {"detail": "Deleted user"}
+
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+@router.post("/login", tags=["auth"], summary="User login")
+async def login(email: str, password: str, session: SessionDep):
+    # Buscar al usuario por correo electrónico
+    query = select(User).where(User.email == email)
+    user_db = session.exec(query).first()
+
+    if not user_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    # Verificar la contraseña
+    if not pwd_context.verify(password, user_db.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials"
+        )
+    # Devolver los atributos del usuario con su ID
+    return user_db
